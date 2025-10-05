@@ -1,0 +1,250 @@
+{
+  "info": {
+    "name": "QA Demo Collection",
+    "_postman_id": "qa-demo-collection-id",
+    "description": "Mini suite de QA para FastAPI demo.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "01 - Health",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/health",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "health"
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('status 200', function () { pm.response.to.have.status(200); });",
+              "pm.test('content-type es JSON', function () { pm.expect(pm.response.headers.get('Content-Type') || '').to.include('application/json'); });",
+              "pm.test('JSON válido y status ok', function () {",
+              "  pm.expect(() => pm.response.json()).to.not.throw();",
+              "  const json = pm.response.json();",
+              "  pm.expect(json).to.have.property('status', 'ok');",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "02 - Login",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\"username\": \"{{username}}\", \"password\": \"{{password}}\"}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/login",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "login"
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "exec": [
+              "// Limpiar token antes de login para evitar falsos positivos",
+              "pm.environment.unset('token');",
+              "// Verificar que existen credenciales (opcional pero útil)",
+              "pm.test('ENV: username/password configurados', function () {",
+              "  pm.expect(pm.environment.get('username')).to.be.a('string').and.not.empty;",
+              "  pm.expect(pm.environment.get('password')).to.be.a('string').and.not.empty;",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('status 200 en login', function () { pm.response.to.have.status(200); });",
+              "pm.test('content-type es JSON', function () { pm.expect(pm.response.headers.get('Content-Type') || '').to.include('application/json'); });",
+              "pm.test('JSON válido', function () { pm.expect(() => pm.response.json()).to.not.throw(); });",
+              "const loginJson = pm.response.json();",
+              "pm.test('login sin error (sin detail)', function () { pm.expect(loginJson.detail, 'detail no debería existir').to.be.undefined; });",
+              "pm.test('token presente y tipo correcto', function () {",
+              "  pm.expect(loginJson).to.have.property('access_token').that.is.a('string').and.not.empty;",
+              "  pm.expect(loginJson).to.have.property('token_type', 'bearer');",
+              "});",
+              "// Solo guardar token si todo pinta bien",
+              "if (pm.response.code === 200 && loginJson && loginJson.access_token && loginJson.token_type === 'bearer') {",
+              "  pm.environment.set('token', loginJson.access_token);",
+              "} else {",
+              "  pm.environment.unset('token');",
+              "}"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "03 - Add (OK)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\"a\": 4, \"b\": 5}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/math/add",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "math",
+            "add"
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('token presente', function () { pm.expect(pm.environment.get('token')).to.be.a('string').and.not.empty; });",
+              "pm.test('status 200', function () { pm.response.to.have.status(200); });",
+              "pm.test('content-type es JSON', function () { pm.expect(pm.response.headers.get('Content-Type') || '').to.include('application/json'); });",
+              "pm.test('JSON válido', function () { pm.expect(() => pm.response.json()).to.not.throw(); });",
+              "const addOkJson = pm.response.json();",
+              "pm.test('sum correct (4+5=9)', function () { pm.expect(addOkJson.result).to.eql(9); });",
+              "pm.test('bug flag off', function () { pm.expect(addOkJson.bug_mode).to.eql(false); });"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "04 - Order not found (404)",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/orders/2",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "orders",
+            "2"
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('token presente', function () { pm.expect(pm.environment.get('token')).to.be.a('string').and.not.empty; });",
+              "pm.test('status 404', function () { pm.response.to.have.status(404); });",
+              "pm.test('content-type es JSON', function () { pm.expect(pm.response.headers.get('Content-Type') || '').to.include('application/json'); });",
+              "pm.test('JSON válido', function () { pm.expect(() => pm.response.json()).to.not.throw(); });",
+              "const nfJson = pm.response.json();",
+              "pm.test('error message', function () { pm.expect(nfJson).to.have.property('detail', 'Order not found'); });"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "05 - Add (Bug Mode Expected to Fail)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\"a\": 2, \"b\": 2}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/math/add",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "math",
+            "add"
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "exec": [
+              "// Este request sirve para mostrar cómo una regresión sería detectada.",
+              "// Si arrancás la API con BUG_ADD=1, el endpoint devolverá 5 en vez de 4 y este test fallará."
+            ],
+            "type": "text/javascript"
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('token presente', function () { pm.expect(pm.environment.get('token')).to.be.a('string').and.not.empty; });",
+              "pm.test('status 200', function () { pm.response.to.have.status(200); });",
+              "pm.test('content-type es JSON', function () { pm.expect(pm.response.headers.get('Content-Type') || '').to.include('application/json'); });",
+              "pm.test('JSON válido', function () { pm.expect(() => pm.response.json()).to.not.throw(); });",
+              "const addBugJson = pm.response.json();",
+              "// Si BUG_ADD=1, el endpoint devolverá 5 => este test fallará",
+              "pm.test('sum 2+2=4 (detecta regresión)', function () { pm.expect(addBugJson.result).to.eql(4); });"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    }
+  ]
+}
