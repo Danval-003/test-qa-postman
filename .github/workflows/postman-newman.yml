@@ -63,7 +63,7 @@ jobs:
       - name: ▶️ Run Postman tests with Newman
         run: |
           ls -la
-          newman run "QA Demo.postman_collection_FIXED.json" \
+          newman run "QA Demo.postman_collection.json" \
             -e "QA Demo.postman_environment.json" \
             --env-var baseUrl=${{ env.BASE_URL }} \
             --reporters cli,htmlextra \
