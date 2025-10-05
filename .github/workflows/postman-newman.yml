@@ -14,8 +14,8 @@ jobs:
       # Si querés probar el bug gate, cambiá a "1"
       BUG_ADD: "0"
       BASE_URL: "http://127.0.0.1:8000"
-      COLLECTION: "postman/QA Demo.postman_collection_FIXED.json"
-      ENVIRONMENT: "postman/QA Demo.postman_environment.json"
+      COLLECTION: "QA Demo.postman_collection_FIXED.json"
+      ENVIRONMENT: "QA Demo.postman_environment.json"
 
     steps:
       - name: ⬇️ Checkout
