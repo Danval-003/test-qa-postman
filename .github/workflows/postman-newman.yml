@@ -62,8 +62,13 @@ jobs:
 
       - name: ▶️ Run Postman tests with Newman
         run: |
-          mkdir -p newman
-          newman run "${{ env.COLLECTION }}"             -e "${{ env.ENVIRONMENT }}"             --env-var baseUrl=${{ env.BASE_URL }}             --reporters cli,htmlextra             --reporter-htmlextra-export newman/report.html             --bail
+          ls -la
+          newman run "QA Demo.postman_collection_FIXED.json" \
+            -e "QA Demo.postman_environment.json" \
+            --env-var baseUrl=${{ env.BASE_URL }} \
+            --reporters cli,htmlextra \
+            --reporter-htmlextra-export ../newman/report.html \
+            --bail
 
       - name: 📤 Upload Newman HTML report
         if: always()
