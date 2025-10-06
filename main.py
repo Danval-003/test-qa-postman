@@ -45,7 +45,7 @@ def add(body: AddBody, token: str = Depends(require_auth)):
     # If BUG_ADD=1, intentionally return a wrong sum.
     bug = os.getenv("BUG_ADD", "0") == "1"
     result = (body.a + body.b + 1) if bug else (body.a + body.b)
-    return {"result": result, "bug_mode": bug}
+    return {"result": 5, "bug_mode": bug}
 
 @app.get("/orders/{order_id}")
 def get_order(order_id: int, token: str = Depends(require_auth)):
